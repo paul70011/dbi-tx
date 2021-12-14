@@ -2,6 +2,8 @@ import java.sql.*;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
+
 public class Main {
 
     final static String STR30 = "000000000000000000000000000000";
@@ -87,17 +89,20 @@ public class Main {
         int x = rand.nextInt(100);
         if (x < 35) {
             int ACCID = rand.nextInt(maxACCID) + 1;
-            System.out.printf("Balance: ACCID(%d) = %d%n", ACCID, balance(ACCID));
+//            System.out.printf("Balance: ACCID(%d) = %d%n", ACCID, balance(ACCID));
+            balance(ACCID);
         } else if (x < 35 + 50) {
             int ACCID = rand.nextInt(maxACCID) + 1;
             int TELLERID = rand.nextInt(maxTELLERID) + 1;
             int BRANCHID = rand.nextInt(maxBRANCHID) + 1;
             int DELTA = rand.nextInt(10000) + 1;
-            System.out.printf("Deposit: ACCID(%d) TELLERID(%d) BRANCHID(%d) DELTA(%d) = %d%n",
-                    ACCID, TELLERID, BRANCHID, DELTA, deposit(ACCID, TELLERID, BRANCHID, DELTA));
+//            System.out.printf("Deposit: ACCID(%d) TELLERID(%d) BRANCHID(%d) DELTA(%d) = %d%n",
+//                    ACCID, TELLERID, BRANCHID, DELTA, deposit(ACCID, TELLERID, BRANCHID, DELTA));
+            deposit(ACCID, TELLERID, BRANCHID, DELTA);
         } else {
             int DELTA = rand.nextInt(10000) + 1;
-            System.out.printf("Analyse: DELTA(%d) = %d%n", DELTA, analyse(DELTA));
+//            System.out.printf("Analyse: DELTA(%d) = %d%n", DELTA, analyse(DELTA));
+            analyse(DELTA);
         }
     }
 
@@ -123,6 +128,7 @@ public class Main {
             Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
             System.out.println("Connected!");
             prepareStatements(conn);
+            conn.setTransactionIsolation(TRANSACTION_SERIALIZABLE);
 
             for (long stop = System.nanoTime() + TimeUnit.MINUTES.toNanos(4); stop > System.nanoTime();) {
                 runRandomTX();
