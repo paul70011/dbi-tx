@@ -17,6 +17,8 @@ public class Main {
     static PreparedStatement depositAccountStmt;
     static PreparedStatement depositHistoryStmt;
 
+    static CallableStatement depositClbl;
+
     // analyse statements
     static PreparedStatement analyseStmt;
 
@@ -34,29 +36,15 @@ public class Main {
     }
 
     public static int deposit(int ACCID, int TELLERID, int BRANCHID, int DELTA) throws SQLException {
-        depositBranchStmt.setInt(1, DELTA);
-        depositBranchStmt.setInt(2, BRANCHID);
-        depositBranchStmt.executeUpdate();
+        depositClbl.setInt(1, BRANCHID);
+        depositClbl.setInt(2, TELLERID);
+        depositClbl.setInt(3, ACCID);
+        depositClbl.setInt(4, DELTA);
+        depositClbl.setString(5, STR30);
+        depositClbl.registerOutParameter(6, Types.INTEGER);
+        depositClbl.execute();
 
-        depositTellerStmt.setInt(1, DELTA);
-        depositTellerStmt.setInt(2, TELLERID);
-        depositTellerStmt.executeUpdate();
-
-        depositAccountStmt.setInt(1, DELTA);
-        depositAccountStmt.setInt(2, ACCID);
-        depositAccountStmt.executeUpdate();
-
-        int newAccBalance = balance(ACCID);
-
-        depositHistoryStmt.setInt(1, ACCID);
-        depositHistoryStmt.setInt(2, TELLERID);
-        depositHistoryStmt.setInt(3, DELTA);
-        depositHistoryStmt.setInt(4, BRANCHID);
-        depositHistoryStmt.setInt(5, newAccBalance);
-        depositHistoryStmt.setString(6, STR30);
-        depositHistoryStmt.executeUpdate();
-
-        return newAccBalance;
+        return depositClbl.getInt(6);
     }
 
     public static int analyse(int DELTA) throws SQLException {
@@ -73,11 +61,7 @@ public class Main {
         balanceStmt = conn.prepareStatement("SELECT balance FROM accounts WHERE accid = ?");
 
         // deposit
-        depositBranchStmt = conn.prepareStatement("UPDATE branches SET balance = balance + ? WHERE branchid = ?");
-        depositTellerStmt = conn.prepareStatement("UPDATE tellers SET balance = balance + ? WHERE tellerid = ?");
-        depositAccountStmt = conn.prepareStatement("UPDATE accounts SET balance = balance + ? WHERE accid = ?");
-        depositHistoryStmt = conn.prepareStatement(
-                "INSERT INTO history (accid, tellerid, delta, branchid, accbalance, cmmnt) VALUES(?, ?, ?, ?, ?, ?);");
+        depositClbl = conn.prepareCall("{CALL deposit(?, ?, ?, ?, ?, ?)}");
 
         // analyse
         analyseStmt = conn.prepareStatement("SELECT count(*) FROM history WHERE delta = ?");
@@ -89,19 +73,20 @@ public class Main {
         int x = rand.nextInt(100);
         if (x < 35) {
             int ACCID = rand.nextInt(maxACCID) + 1;
-//            System.out.printf("Balance: ACCID(%d) = %d%n", ACCID, balance(ACCID));
+            // System.out.printf("Balance: ACCID(%d) = %d%n", ACCID, balance(ACCID));
             balance(ACCID);
         } else if (x < 35 + 50) {
             int ACCID = rand.nextInt(maxACCID) + 1;
             int TELLERID = rand.nextInt(maxTELLERID) + 1;
             int BRANCHID = rand.nextInt(maxBRANCHID) + 1;
             int DELTA = rand.nextInt(10000) + 1;
-//            System.out.printf("Deposit: ACCID(%d) TELLERID(%d) BRANCHID(%d) DELTA(%d) = %d%n",
-//                    ACCID, TELLERID, BRANCHID, DELTA, deposit(ACCID, TELLERID, BRANCHID, DELTA));
+            // System.out.printf("Deposit: ACCID(%d) TELLERID(%d) BRANCHID(%d) DELTA(%d) =
+            // %d%n",
+            // ACCID, TELLERID, BRANCHID, DELTA, deposit(ACCID, TELLERID, BRANCHID, DELTA));
             deposit(ACCID, TELLERID, BRANCHID, DELTA);
         } else {
             int DELTA = rand.nextInt(10000) + 1;
-//            System.out.printf("Analyse: DELTA(%d) = %d%n", DELTA, analyse(DELTA));
+            // System.out.printf("Analyse: DELTA(%d) = %d%n", DELTA, analyse(DELTA));
             analyse(DELTA);
         }
     }
