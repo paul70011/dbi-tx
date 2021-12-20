@@ -12,11 +12,6 @@ public class Main {
     static PreparedStatement balanceStmt;
 
     // deposit statements
-    static PreparedStatement depositBranchStmt;
-    static PreparedStatement depositTellerStmt;
-    static PreparedStatement depositAccountStmt;
-    static PreparedStatement depositHistoryStmt;
-
     static CallableStatement depositClbl;
 
     // analyse statements
